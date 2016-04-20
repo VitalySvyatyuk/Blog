@@ -4,10 +4,13 @@ from flask_wtf import Form
 from wtforms import StringField, SelectField, SubmitField, PasswordField
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import Required, Length, Email
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secretico'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.sqlite3'
 bootstrap = Bootstrap(app)
+db = SQLAlchemy(app)
 
 
 class LoginForm(Form):
@@ -23,6 +26,18 @@ class RegistrationForm(Form):
     password = PasswordField('Your Password', validators=[Required(), Length(1, 16)])
     submit = SubmitField('Register')
 
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(16), index=True, unique=True)
+    age = db.Column(db.Integer)
+    email = db.Column(db.String(16), unique=True)
+    password = db.Column(db.String(16))
+
+    def __repr__(self):
+        return '<User {0}>'.format(self.name)
+
 @app.route("/")
 def welcome():
     return render_template("welcome.html")
@@ -32,19 +47,22 @@ def login():
     name = None
     password = None
     form = LoginForm()
+    new = False
     if form.validate_on_submit():
         name = form.name.data
         password = form.password.data
         form.name.data = ''
         form.password.data = ''
-        return render_template("welcome.html")
+        if User.query.filter_by(name=name).first() is None:
+            new = True
+            return render_template('login.html', form=form, new=new)
+        return render_template("welcome.html", name=name)
     return render_template('login.html', form=form)
 
 
 @app.route("/registration",methods=['GET', 'POST'])
 def registration():
     form = RegistrationForm()
-    print form
     if form.validate_on_submit():
         name = form.name.data
         age = form.age.data
@@ -54,6 +72,9 @@ def registration():
         form.age.data = ''
         form.email.data = ''
         form.password.data = ''
+        if User.query.filter_by(name=name).first() is None:
+            db.session.add(User(name=name, age=age, email=email, password=password))
+            db.session.commit()
         return redirect(url_for('login'))
     return render_template("registration.html", form=form)
 
@@ -62,4 +83,5 @@ def posts():
     return render_template("posts.html")
 
 if __name__ == "__main__":
+    db.create_all()
     app.run(debug=True)
