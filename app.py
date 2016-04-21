@@ -3,7 +3,7 @@ from flask_bootstrap import Bootstrap
 from flask_wtf import Form
 from wtforms import StringField, SelectField, SubmitField, PasswordField, BooleanField
 from wtforms.fields.html5 import EmailField
-from wtforms.validators import Required, Length, Email
+from wtforms.validators import Required, Length, Email, EqualTo
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -28,7 +28,9 @@ class RegistrationForm(Form):
     name = StringField('What is your name?', validators=[Required(), Length(1, 16)])
     age = SelectField('Your age', choices=[(str(i), str(i)) for i in range(10, 100)])
     email = EmailField('Email address', validators=[Required(), Email()])
-    password = PasswordField('Your Password', validators=[Required(), Length(1, 16)])
+    password = PasswordField('Your Password', validators=[Required(), Length(1, 16),
+                                                          EqualTo('pass_repeat', message='Passwords must match.')])
+    pass_repeat = PasswordField('Repeat Password', validators=[Required(), Length(1, 16)])
     submit = SubmitField('Register')
 
 
@@ -37,7 +39,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(16), index=True, unique=True)
     age = db.Column(db.Integer)
-    email = db.Column(db.String(16), unique=True)
+    email = db.Column(db.String(16))
     password_hash = db.Column(db.String(64))
 
     def set_password(self, password):
@@ -57,20 +59,20 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User {0}>'.format(self.name)
 
+
 @lm.user_loader
 def load_user(id):
     return User.query.get(int(id))
+
 
 @app.route("/")
 def welcome():
     return render_template("welcome.html")
 
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
-    name = None
-    password = None
     form = LoginForm()
-    new = False
     if form.validate_on_submit():
         password = form.password.data
         user = User.query.filter_by(name=form.name.data).first()
@@ -84,6 +86,7 @@ def login():
             wrong_pass = True
             return render_template('login.html', form=form, name=user.name, wrong_pass=wrong_pass)
     return render_template('login.html', form=form)
+
 
 @app.route('/logout')
 @login_required
@@ -114,9 +117,11 @@ def registration():
         return redirect(url_for('login'))
     return render_template("registration.html", form=form)
 
+
 @app.route("/posts")
 def posts():
     return render_template("posts.html")
+
 
 if __name__ == "__main__":
     db.create_all()

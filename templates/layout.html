@@ -3,8 +3,13 @@
 {% block title %}Blog{% endblock %}
 
 {% block navbar %}
+    {% if not current_user.is_authenticated %}
+        {% set button_logname = '/login', '/login', 'Login' %}
+    {% else %}
+        {% set button_logname = '/logout', '/logout', 'Logout' %}
+    {% endif %}
     {% set navigation_bar = [('/', '/', 'Welcome'), ('/posts', '/posts', 'Posts'),
-                               ('/login', '/login', 'Login') ]%}
+                               button_logname ]%}
     {% set active_page = active_page|default('/') %}
     <div class="navbar navbar-inverse">
         <div class="container">
