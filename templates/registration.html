@@ -8,7 +8,13 @@
         <div class="row">
             <div class="col-md-3">
                 {{ wtf.quick_form(form) }}
+                <br>
+                {% if already_exists %}
+                    <div class="alert alert-warning" role="alert">User {{ name }} is already exists.</div>
+                {% endif %}
             </div>
         </div>
+        <br>
+
     </div>
 {% endblock %}
