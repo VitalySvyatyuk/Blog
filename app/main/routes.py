@@ -56,6 +56,6 @@ def registration():
     return render_template("registration.html", form=form)
 
 
-@main.route("/posts")
-def posts():
-    return render_template("posts.html")
+@main.route("/disk")
+def disk():
+    return render_template("disk.html")

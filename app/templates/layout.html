@@ -8,7 +8,7 @@
     {% else %}
         {% set button_logname = '/logout', '/logout', 'Logout' %}
     {% endif %}
-    {% set navigation_bar = [('/', '/', 'Welcome'), ('/posts', '/posts', 'Posts'),
+    {% set navigation_bar = [('/', '/', 'Welcome'), ('/disk', '/disk', 'Disk'),
                                button_logname ]%}
     {% set active_page = active_page|default('/') %}
     <div class="navbar navbar-inverse">
